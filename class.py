@@ -134,38 +134,50 @@ class BookKeeping:
             break  # Exit the loop once the book is successfully borrowed
 
     def return_book(self):
-        print("---Borrowed Books--")
-        # found = False
-
+        print("---Borrowed Books---")
         for key, value in self.borrowed.items():
             print(f"{value['quantity']}. {key} - borrowed by {value['borrower']}")
 
-            print("-----------------------------------------------")
-            # name_borrower = input("whats your name in the list? :")
-
-            """
-                    for key, value in self.borrowed.items():
-            
-            if name_borrower == value['borrower']:
-                # found = True
-            """
-        book_return = int(input("Enter the book number to return: "))
         print("-----------------------------------------------")
+        name_borrower = input("What's your name in the list? : ").strip()
 
-        if book_return > value['quantity']:
-            print(f"The number is above what was borrowed by {value['borrower']}")
-            book_return = int(input("Enter the book number to return: "))
+        book_found = False
+        for key, value in self.borrowed.items():
+            if name_borrower == value['borrower']:
+                print(f"Borrowed book: {key}, Quantity: {value['quantity']}")
+                book_found = True
 
-        elif book_return < value['quantity']:
-            print(f"You want to return [{book_return}] you still have [{value['quantity'] - book_return}] "
-                  f"more to return")
-            confirm = input("do you want to proceed? Yes/No ").lower()
-            print("-----------------------------------------------")
-            if confirm == "no":
-                book_return = int(input("Enter the book number to return: "))
-            elif confirm == "yes":
-                print()
-                print(f"Thank you, {value['borrower']}, for returning '{key}'.")
+                while True:
+                    try:
+                        book_return = int(input(f"Enter the quantity to return (Borrowed: {value['quantity']}): "))
+                        if 0 < book_return <= value['quantity']:
+                            break
+                        else:
+                            print("Invalid quantity. Please enter a valid amount.")
+                    except ValueError:
+                        print("Invalid input! Please enter a number.")
+
+                # Update the quantity in `self.borrowed` and `self.available`
+                value['quantity'] -= book_return
+                if value['quantity'] == 0:
+                    del self.borrowed[key]  # Remove book from borrowed list if all returned
+                else:
+                    self.borrowed[key] = value
+
+                self.available[key] += book_return  # Update available stock
+
+                # Write changes back to files
+                with open("books_avail.json", "w") as f:
+                    json.dump(self.available, f, indent=4)
+
+                with open("borrowed_book.json", "w") as f:
+                    json.dump(self.borrowed, f, indent=4)
+
+                print(f"Thank you, {name_borrower}, for returning '{key}'.")
+                break
+
+        if not book_found:
+            print("No borrowed books found under your name.")
 
     def view_borrowed_book(self):
 
