@@ -1,1 +1,10 @@
-{"The Great Gatsby": {"quantity": 2, "borrower": "ikedi"}}
+{
+    "Pride snd Prejudice": {
+        "quantity": 2,
+        "borrower": "paul"
+    },
+    "The greate Gatsby": {
+        "quantity": 2,
+        "borrower": "ik"
+    }
+}

@@ -1,12 +1,5 @@
 import json
 
-books_avail = {
-    'The Great Gatsby': 3,
-    'To Kill a Mockingbird': 2,
-    '1984': 5,
-    'Pride and Prejudice': 4
-}
-
 borrowed_book = {}
 
 
@@ -20,6 +13,14 @@ class BookKeeping:
                    "4. View Borrowed Books" "\n"
                    "5. Exit")
         print(options)
+        # read books_available.json file
+        with open("books_avail.json", "r") as file:
+            self.available = json.load(file)
+
+        # read borrowed_book.json file
+        with open("borrowed_book.json", "r") as f:
+            self.borrowed = json.load(f)
+
         self.n = 0
         print("-----------------------------------------------")
         while True:
@@ -57,7 +58,8 @@ class BookKeeping:
     def view_available_books(self):
 
         printed_once = False
-        for key, value in books_avail.items():
+
+        for key, value in self.available.items():
             self.n += 1
             if self.n > 0:
                 if not printed_once:
@@ -75,68 +77,99 @@ class BookKeeping:
     def borrow_book(self):
 
         printed_once = False
-        for key, value in books_avail.items():
+        self.n = 0  # Reset self.n before listing books
+        for key, value in self.available.items():
             self.n += 1
-            if self.n > 0:
-                if not printed_once:
-                    print("--- Available Books --- ")
-                    printed_once = True
-                print(f"{self.n}. {key} (Quantity: {value})")
-                print()
+            if not printed_once:
+                print("--- Available Books --- ")
+                printed_once = True
+            print(f"{self.n}. {key} (Quantity: {value})")
+        print()
 
         while True:
-            book_choice = int(input("Choose an Option: "))
-            book_number = int(input("Enter the Book Quantity to Borrow: "))
-            name = input("Enter your Name: ")
-            print()
+            try:
+                book_choice = int(input("Choose an Option: "))
+                if 1 <= book_choice <= self.n:
+                    # Access the book title based on the user's choice
+                    key, value = list(self.available.items())[book_choice - 1]
+                else:
+                    print("Invalid option. Please choose a valid book number.")
+                    continue
+            except ValueError:
+                print("Invalid input! Please enter a number.")
+                continue
 
-            # Access the book title based on the user's choice
-            key, value = list(books_avail.items())[book_choice - 1]  # Adjust for zero-based index
-            print(f"You have selected: {key}")
+            try:
+                book_number = int(input(f"Enter the quantity to borrow (Available: {value}): "))
+                if book_number <= 0:
+                    print("Please enter a positive number.")
+                    continue
+                if book_number > value:
+                    print("Not enough quantity. Please enter a valid amount.")
+                    continue
+            except ValueError:
+                print("Invalid input! Please enter a number.")
+                continue
 
-            # Check if the quantity is available
-            if book_number > value:
-                print("Not Enough Quantity. Please choose a valid quantity.")
-            else:
-                # Reduce the available quantity in the library
-                books_avail[key] -= book_number
-                # Update the borrowed_book dictionary with borrowed details
-                borrowed_book[key] = {"quantity": book_number, "borrower": name}
-                print(f"You have borrowed {key}. Please return it on time.")
-                print(borrowed_book)
-                with open("borrowed_book.json", "w") as f:
-                    json.dump(borrowed_book, f)
-                break  # Exit the loop once the book is successfully borrowed
+            name = input("Enter your name: ").strip()
+            if not name:
+                print("Name cannot be empty. Please try again.")
+                continue
+
+            # Reduce the available quantity
+            self.available[key] -= book_number
+
+            # Update the borrowed_book dictionary with details
+            borrowed_book[key] = {"quantity": book_number, "borrower": name}
+            print(f"\nYou have borrowed '{key}'. Please return it on time.")
+
+            # Write updated data to files
+            with open("books_avail.json", "w") as f:
+                json.dump(self.available, f, indent=4)
+
+            self.borrowed.update(borrowed_book)
+            with open("borrowed_book.json", "w") as f:
+                json.dump(self.borrowed, f, indent=4)
+
+            break  # Exit the loop once the book is successfully borrowed
 
     def return_book(self):
         print("---Borrowed Books--")
-        with open("borrowed_book.json", "r") as f:
-            borrowed = json.load(f)
+        # found = False
 
-        for key, value in borrowed.items():
+        for key, value in self.borrowed.items():
             print(f"{value['quantity']}. {key} - borrowed by {value['borrower']}")
 
-        print("-----------------------------------------------")
+            print("-----------------------------------------------")
+            # name_borrower = input("whats your name in the list? :")
+
+            """
+                    for key, value in self.borrowed.items():
+            
+            if name_borrower == value['borrower']:
+                # found = True
+            """
         book_return = int(input("Enter the book number to return: "))
         print("-----------------------------------------------")
+
         if book_return > value['quantity']:
             print(f"The number is above what was borrowed by {value['borrower']}")
+            book_return = int(input("Enter the book number to return: "))
+
         elif book_return < value['quantity']:
             print(f"You want to return [{book_return}] you still have [{value['quantity'] - book_return}] "
                   f"more to return")
             confirm = input("do you want to proceed? Yes/No ").lower()
             print("-----------------------------------------------")
             if confirm == "no":
-                book_return
+                book_return = int(input("Enter the book number to return: "))
             elif confirm == "yes":
                 print()
                 print(f"Thank you, {value['borrower']}, for returning '{key}'.")
 
     def view_borrowed_book(self):
-        with open("borrowed_book.json", "r") as f:
-            borrowed = json.load(f)
 
-        for key, value in borrowed.items():
+        for key, value in self.borrowed.items():
             print(f"{value['quantity']}. {key} - borrowed by {value['borrower']}")
 
         print("-----------------------------------------------")
