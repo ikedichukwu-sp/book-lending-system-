@@ -13,13 +13,28 @@ class BookKeeping:
                    "4. View Borrowed Books" "\n"
                    "5. Exit")
         print(options)
-        # read books_available.json file
-        with open("books_avail.json", "r") as file:
-            self.available = json.load(file)
 
-        # read borrowed_book.json file
-        with open("borrowed_book.json", "r") as f:
-            self.borrowed = json.load(f)
+        # Read books_available.json file
+        try:
+            with open("books_avail.json", "r") as file:
+                self.available = json.load(file)
+        except FileNotFoundError:
+            print("Error: 'books_avail.json' file not found. Creating a new one...")
+            self.available = {}
+        except json.JSONDecodeError:
+            print("Error: 'books_avail.json' is corrupted. Starting fresh...")
+            self.available = {}
+
+        # Read borrowed_book.json file
+        try:
+            with open("borrowed_book.json", "r") as f:
+                self.borrowed = json.load(f)
+        except FileNotFoundError:
+            print("Error: 'borrowed_book.json' file not found. Creating a new one...")
+            self.borrowed = {}
+        except json.JSONDecodeError:
+            print("Error: 'borrowed_book.json' is corrupted. Starting fresh...")
+            self.borrowed = {}
 
         self.n = 0
         print("-----------------------------------------------")
@@ -31,7 +46,6 @@ class BookKeeping:
                 print("Invalid input! Please enter a number.")
 
         print("-----------------------------------------------")
-
         self.user_choice()
 
     def user_choice(self):
@@ -179,19 +193,14 @@ class BookKeeping:
         if not book_found:
             print("No borrowed books found under your name.")
 
-    def view_borrowed_book(self):
-
-        for key, value in self.borrowed.items():
-            print(f"{value['quantity']}. {key} - borrowed by {value['borrower']}")
-
+    def view_borrowed_books(self):
+        if not self.borrowed:
+            print("No books have been borrowed.")
+        else:
+            print("\n--- Borrowed Books ---")
+            for idx, (title, info) in enumerate(self.borrowed.items(), start=1):
+                print(f"{idx}. {title} (Quantity: {info['quantity']}, Borrower: {info['borrower']})")
         print("-----------------------------------------------")
-        decision = input("Do you want to borrow ? Yes/NO :").lower()
-        if decision == "yes":
-            print("-----------------------------------------------")
-            self.borrow_book()
-        elif decision == "no":
-            print("-----------------------------------------------")
-            BookKeeping()
 
     def close(self):
         decision = input("Are you sure you want to Quit ? Yes/NO :").lower()
@@ -204,4 +213,6 @@ class BookKeeping:
             BookKeeping()
 
 
-bookkeeping = BookKeeping()
+# Start the program
+if __name__ == "__main__":
+    BookKeeping()
